@@ -1,12 +1,10 @@
 require("dotenv").config()
 
 const { REST, Routes, SlashCommandBuilder } = require("discord.js")
-const CLIENT_ID = "1479461907235864576"
-// ===== COMMAND LIST =====
+
+const CLIENT_ID = "123456789012345678"
 
 const commands = [
-
-/* ================= FISHING ================= */
 
 new SlashCommandBuilder()
 .setName("fish")
@@ -20,8 +18,6 @@ option.setName("rod")
 .setDescription("Loại cần câu")
 .setRequired(true)
 ),
-
-/* ================= TAIXIU ================= */
 
 new SlashCommandBuilder()
 .setName("taixiu")
@@ -37,8 +33,6 @@ option.setName("money")
 .setRequired(true)
 ),
 
-/* ================= DEV ================= */
-
 new SlashCommandBuilder()
 .setName("rig")
 .setDescription("Bẻ cầu tài xỉu (dev)")
@@ -50,13 +44,11 @@ option.setName("side")
 
 new SlashCommandBuilder()
 .setName("taixiu-toggle")
-.setDescription("Bật hoặc tắt game tài xỉu (dev)"),
-
-/* ================= RPG ================= */
+.setDescription("Bật / tắt tài xỉu"),
 
 new SlashCommandBuilder()
 .setName("profile")
-.setDescription("Xem profile nhân vật"),
+.setDescription("Xem profile"),
 
 new SlashCommandBuilder()
 .setName("boss")
@@ -68,27 +60,11 @@ new SlashCommandBuilder()
 
 ].map(cmd => cmd.toJSON())
 
-// ===== REGISTER COMMAND =====
-
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN)
 
-;(async () => {
-
-try {
-
-console.log("Deploying slash commands...")
-
-await rest.put(
-Routes.applicationCommands(process.env.CLIENT_ID),
+rest.put(
+Routes.applicationCommands(CLIENT_ID),
 { body: commands }
 )
-
-console.log("Slash commands deployed successfully")
-
-} catch (error) {
-
-console.error(error)
-
-}
-
-})()
+.then(()=>console.log("Slash commands deployed"))
+.catch(console.error)
