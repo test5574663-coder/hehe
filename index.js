@@ -3,7 +3,7 @@ require("dotenv").config()
 const express = require("express")
 const { Client, GatewayIntentBits } = require("discord.js")
 
-// ===== MODULES =====
+// ===== MODULE =====
 
 const economy = require("./src/core/economy")
 
@@ -11,34 +11,34 @@ const fishing = require("./src/fishing/fishing")
 const taixiu = require("./src/taixiu/taixiu")
 const rpg = require("./src/rpg/rpg")
 
+// ===== CHANNEL ID =====
+
+const FISHING_CHANNEL = "1479330773248249907"
+const TAIXIU_CHANNEL = "1479443413290975272"
+const RPG_CHANNEL = "1479329833707110431"
+
 // ===== EXPRESS SERVER (ANTI SLEEP) =====
 
 const app = express()
 
 app.get("/", (req,res)=>{
-
-res.send("Bot is running")
-
+res.send("Bot is alive")
 })
 
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, ()=>{
-
 console.log(`Web server running on ${PORT}`)
-
 })
 
 // ===== DISCORD CLIENT =====
 
 const client = new Client({
-
-intents: [
+intents:[
 GatewayIntentBits.Guilds,
 GatewayIntentBits.GuildMessages,
 GatewayIntentBits.MessageContent
 ]
-
 })
 
 // ===== READY =====
@@ -49,7 +49,7 @@ console.log(`Bot online: ${client.user.tag}`)
 
 })
 
-// ===== COMMAND HANDLER =====
+// ===== COMMAND =====
 
 client.on("messageCreate", async (message)=>{
 
@@ -62,39 +62,43 @@ const cmd = args[0].toLowerCase()
 
 if(cmd === "!fish"){
 
+if(message.channel.id !== FISHING_CHANNEL){
+
+return message.reply("❌ Lệnh chỉ dùng trong kênh câu cá")
+
+}
+
 fishing.run(client,message,args)
 
 }
 
-// ===== TAIXIU BET =====
+// ===== TAIXIU =====
 
 if(cmd === "!taixiu"){
+
+if(message.channel.id !== TAIXIU_CHANNEL){
+
+return message.reply("❌ Lệnh chỉ dùng trong kênh tài xỉu")
+
+}
 
 taixiu.bet(message,economy)
 
 }
 
-// ===== RPG PROFILE =====
+// ===== RPG =====
 
-if(cmd === "!profile"){
+if(cmd === "!profile" || cmd === "!boss" || cmd === "!dungeon"){
 
-rpg.profile(message,economy)
+if(message.channel.id !== RPG_CHANNEL){
 
-}
-
-// ===== RPG BOSS =====
-
-if(cmd === "!boss"){
-
-rpg.boss(message,economy)
+return message.reply("❌ Lệnh chỉ dùng trong kênh RPG")
 
 }
 
-// ===== RPG DUNGEON =====
-
-if(cmd === "!dungeon"){
-
-rpg.dungeon(message,economy)
+if(cmd === "!profile") rpg.profile(message,economy)
+if(cmd === "!boss") rpg.boss(message,economy)
+if(cmd === "!dungeon") rpg.dungeon(message,economy)
 
 }
 
@@ -104,9 +108,7 @@ rpg.dungeon(message,economy)
 
 setInterval(()=>{
 
-client.guilds.cache.forEach(guild=>{
-
-const channel = guild.channels.cache.find(c=>c.name==="taixiu")
+const channel = client.channels.cache.get(TAIXIU_CHANNEL)
 
 if(!channel) return
 
@@ -115,8 +117,6 @@ if(taixiu.canRoll()){
 taixiu.roll(channel,economy)
 
 }
-
-})
 
 },5000)
 
