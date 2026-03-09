@@ -1,5 +1,7 @@
 const fishList = require("./fishList")
 
+// ===== FISH =====
+
 async function run(interaction,economy){
 
 await interaction.deferReply()
@@ -8,17 +10,30 @@ const id = interaction.user.id
 
 const player = economy.getUser(id)
 
-const fish = fishList[Math.floor(Math.random()*fishList.length)]
-
+// tạo mảng cá nếu chưa có
 player.fish ??= []
 
+// kiểm tra cần câu
+if(!player.rod){
+
+return interaction.editReply("🎣 Bạn chưa có cần câu")
+
+}
+
+// random cá
+const fish = fishList[Math.floor(Math.random()*fishList.length)]
+
+// thêm vào inventory
 player.fish.push(fish.name)
+
+// thêm exp
+player.exp += 5
 
 economy.updateUser(id,player)
 
 return interaction.editReply(`🎣 Bạn câu được **${fish.name}**`)
-
 }
+
 
 // ===== BUY ROD =====
 
@@ -34,9 +49,17 @@ const player = economy.getUser(id)
 
 const rods = {
 
-basic:{price:100},
-iron:{price:500},
-gold:{price:1500}
+basic:{
+price:100
+},
+
+iron:{
+price:500
+},
+
+gold:{
+price:1500
+}
 
 }
 
