@@ -1,39 +1,15 @@
-const fs = require("fs")
 const { randomInt } = require("../utils/random")
+const { load, save } = require("./taixiuData")
+const { resultEmbed } = require("./taixiuEmbed")
 
-const path = "./src/data/taixiu.json"
-
-// ================= LOAD =================
-
-function load(){
-
-if(!fs.existsSync(path)){
-
-return {
-bets:{},
-history:[]
-}
-
-}
-
-return JSON.parse(fs.readFileSync(path))
-
-}
-
-// ================= SAVE =================
-
-function save(data){
-
-fs.writeFileSync(path,JSON.stringify(data,null,2))
-
-}
+const DEV_ROLE_ID = "1479648187328368670"
+const cooldown = new Map()
 
 // ================= BET =================
 
 async function bet(interaction,economy){
 
 const id = interaction.user.id
-
 const side = interaction.options.getString("side")
 const money = interaction.options.getInteger("money")
 
@@ -47,34 +23,48 @@ return interaction.reply({content:"❌ Không đủ tiền",ephemeral:true})
 
 const data = load()
 
+if(!data.enabled){
+
+return interaction.reply("⚠️ Tài xỉu đang tắt")
+
+}
+
 if(!data.bets) data.bets = {}
 
-data.bets[id] = {
-side,
-money
-}
+data.bets[id] = { side, money }
 
 save(data)
 
-return interaction.reply("🎲 Đã đặt cược thành công")
+return interaction.reply("🎲 Đặt cược thành công")
 
 }
 
 // ================= ROLL =================
 
-function roll(client,economy){
+async function roll(channel,economy){
 
 const data = load()
 
-const dice = [
+let dice = [
 randomInt(1,6),
 randomInt(1,6),
 randomInt(1,6)
 ]
 
-const sum = dice.reduce((a,b)=>a+b)
+let sum = dice.reduce((a,b)=>a+b)
 
-const result = sum >= 11 ? "tai" : "xiu"
+let result = sum >= 11 ? "tai" : "xiu"
+
+// ===== DEV RIG =====
+
+if(data.rig){
+
+result = data.rig
+data.rig = null
+
+}
+
+// ===== PAYOUT =====
 
 Object.entries(data.bets || {}).forEach(([id,bet])=>{
 
@@ -96,7 +86,7 @@ economy.updateUser(id,player)
 
 })
 
-// ================= HISTORY =================
+// ===== HISTORY =====
 
 if(!data.history) data.history = []
 
@@ -108,15 +98,76 @@ data.history.shift()
 
 }
 
-// ================= RESET BET =================
+// ===== RESET =====
 
 data.bets = {}
 
 save(data)
 
+// ===== SEND EMBED =====
+
+const embed = resultEmbed(dice,sum,result,data.history)
+
+channel.send({embeds:[embed]})
+
+}
+
+// ================= COOLDOWN =================
+
+function canRoll(){
+
+const now = Date.now()
+
+if(!cooldown.has("roll")){
+
+cooldown.set("roll",now)
+
+return true
+
+}
+
+if(now - cooldown.get("roll") >= 60000){
+
+cooldown.set("roll",now)
+
+return true
+
+}
+
+return false
+
+}
+
+// ================= DEV =================
+
+function rig(side){
+
+const data = load()
+
+data.rig = side
+
+save(data)
+
+}
+
+function toggle(){
+
+const data = load()
+
+data.enabled = !data.enabled
+
+save(data)
+
+return data.enabled
+
 }
 
 module.exports = {
+
 bet,
-roll
+roll,
+canRoll,
+rig,
+toggle
+
 }
