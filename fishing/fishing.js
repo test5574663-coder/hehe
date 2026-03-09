@@ -1,182 +1,70 @@
 const fishList = require("./fishList")
-const embed = require("./fishingEmbed")
 
-// ================= RANDOM HELPER =================
+async function run(interaction,economy){
 
-function randomFrom(list){
-
-return list[Math.floor(Math.random()*list.length)]
-
-}
-
-// ================= RANDOM FISH =================
-
-function randomFish(){
-
-const roll = Math.random()
-
-if(roll < 0.55) return { ...randomFrom(fishList.common), rarity:"common" }
-
-if(roll < 0.80) return { ...randomFrom(fishList.uncommon), rarity:"uncommon" }
-
-if(roll < 0.92) return { ...randomFrom(fishList.rare), rarity:"rare" }
-
-if(roll < 0.98) return { ...randomFrom(fishList.epic), rarity:"epic" }
-
-return { ...randomFrom(fishList.mythic), rarity:"mythic" }
-
-}
-
-// ================= CAU CA =================
-
-async function fish(interaction,economy){
+await interaction.deferReply()
 
 const id = interaction.user.id
 
 const player = economy.getUser(id)
 
-if(player.rods <= 0){
+const fish = fishList[Math.floor(Math.random()*fishList.length)]
 
-return interaction.reply("🎣 Bạn không có cần câu")
+player.fish ??= []
 
-}
-
-const fish = randomFish()
-
-player.rods -= 1
-
-player.inventory.push(fish.name)
+player.fish.push(fish.name)
 
 economy.updateUser(id,player)
 
-return interaction.reply({
-
-embeds:[embed.fishResult(fish)]
-
-})
+return interaction.editReply(`🎣 Bạn câu được **${fish.name}**`)
 
 }
 
-// ================= BAN CA =================
-
-async function sell(interaction,economy){
-
-const id = interaction.user.id
-
-const player = economy.getUser(id)
-
-if(!player.inventory.length){
-
-return interaction.reply("📦 Inventory trống")
-
-}
-
-let vnd = 0
-let gold = 0
-
-player.inventory.forEach(item => {
-
-const fish =
-
-fishList.common.find(f=>f.name===item) ||
-fishList.uncommon.find(f=>f.name===item) ||
-fishList.rare.find(f=>f.name===item) ||
-fishList.epic.find(f=>f.name===item) ||
-fishList.mythic.find(f=>f.name===item)
-
-if(!fish) return
-
-if(fish.currency === "gold"){
-
-gold += fish.value
-
-}else{
-
-vnd += fish.value
-
-}
-
-})
-
-player.inventory = []
-
-player.vnd += vnd
-player.gold += gold
-
-economy.updateUser(id,player)
-
-return interaction.reply({
-
-embeds:[embed.sellResult(vnd,gold)]
-
-})
-
-}
-
-// ================= SHOP =================
-
-async function shop(interaction){
-
-return interaction.reply({
-
-embeds:[embed.shopEmbed()]
-
-})
-
-}
-
-// ================= BUY ROD =================
+// ===== BUY ROD =====
 
 async function buyRod(interaction,economy){
 
+await interaction.deferReply({ephemeral:true})
+
+const rod = interaction.options.getString("rod")
+
 const id = interaction.user.id
 
 const player = economy.getUser(id)
 
-const type = interaction.options.getInteger("rod")
+const rods = {
 
-const prices = {
-
-1:50,
-2:150,
-3:400
+basic:{price:100},
+iron:{price:500},
+gold:{price:1500}
 
 }
 
-const price = prices[type]
+if(!rods[rod]){
 
-if(!price){
-
-return interaction.reply("❌ Cần câu không tồn tại")
+return interaction.editReply("❌ Loại cần câu không tồn tại")
 
 }
 
-if(player.vnd < price){
+if(player.vnd < rods[rod].price){
 
-return interaction.reply("💸 Không đủ VND")
-
-}
-
-player.vnd -= price
-player.rods += 1
-
-if(player.rods > 99){
-
-player.rods = 99
+return interaction.editReply("❌ Không đủ tiền")
 
 }
+
+player.vnd -= rods[rod].price
+
+player.rod = rod
 
 economy.updateUser(id,player)
 
-return interaction.reply("🛒 Bạn đã mua cần câu")
+return interaction.editReply(`🎣 Đã mua cần câu **${rod}**`)
 
 }
 
 module.exports = {
 
-fish,
-sell,
-shop,
+run,
 buyRod
 
 }
