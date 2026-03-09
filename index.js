@@ -1,100 +1,125 @@
-require("dotenv").config();
+require("dotenv").config()
 
-const { Client, GatewayIntentBits } = require("discord.js");
+const express = require("express")
+const { Client, GatewayIntentBits } = require("discord.js")
 
-/* =========================
-   MODULE IMPORT
-========================= */
+// ===== MODULES =====
 
-const economy = require("./core/economy");
+const economy = require("./src/core/economy")
 
-const fishing = require("./fishing/fishing");
+const fishing = require("./src/fishing/fishing")
+const taixiu = require("./src/taixiu/taixiu")
+const rpg = require("./src/rpg/rpg")
 
-const taixiu = require("./taixiu/taixiu");
+// ===== EXPRESS SERVER (ANTI SLEEP) =====
 
-const rpg = require("./rpg/rpg");
+const app = express()
 
-/* =========================
-   CLIENT
-========================= */
+app.get("/", (req,res)=>{
+
+res.send("Bot is running")
+
+})
+
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, ()=>{
+
+console.log(`Web server running on ${PORT}`)
+
+})
+
+// ===== DISCORD CLIENT =====
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
 
-/* =========================
-   READY
-========================= */
+intents: [
+GatewayIntentBits.Guilds,
+GatewayIntentBits.GuildMessages,
+GatewayIntentBits.MessageContent
+]
 
-client.once("ready", () => {
+})
 
-  console.log(`Bot online: ${client.user.tag}`);
+// ===== READY =====
 
-});
+client.once("clientReady", ()=>{
 
+console.log(`Bot online: ${client.user.tag}`)
 
-/* =========================
-   COMMAND HANDLER
-========================= */
+})
 
-client.on("messageCreate", async (message) => {
+// ===== COMMAND HANDLER =====
 
-  if (message.author.bot) return;
+client.on("messageCreate", async (message)=>{
 
-  const args = message.content.split(" ");
-  const cmd = args[0].toLowerCase();
+if(message.author.bot) return
 
-  /* ===== FISHING ===== */
+const args = message.content.split(" ")
+const cmd = args[0].toLowerCase()
 
-  if (cmd === "!fish") {
+// ===== FISHING =====
 
-    fishing.run(client, message, args);
+if(cmd === "!fish"){
 
-  }
+fishing.run(client,message,args)
 
-  /* ===== TAIXIU ===== */
+}
 
-  if (cmd === "!taixiu") {
+// ===== TAIXIU BET =====
 
-    taixiu.run(client, message, args);
+if(cmd === "!taixiu"){
 
-  }
+taixiu.bet(message,economy)
 
-  /* ===== RPG ===== */
+}
 
-  if (cmd === "!profile") {
+// ===== RPG PROFILE =====
 
-    rpg.profile(client, message);
+if(cmd === "!profile"){
 
-  }
+rpg.profile(message,economy)
 
-  if (cmd === "!boss") {
+}
 
-    rpg.boss(client, message);
+// ===== RPG BOSS =====
 
-  }
+if(cmd === "!boss"){
 
-  if (cmd === "!dungeon") {
+rpg.boss(message,economy)
 
-    rpg.dungeon(client, message);
+}
 
-  }
+// ===== RPG DUNGEON =====
 
-  if (cmd === "!pvp") {
+if(cmd === "!dungeon"){
 
-    rpg.pvp(client, message, args);
+rpg.dungeon(message,economy)
 
-  }
+}
 
-});
+})
 
+// ===== AUTO TAIXIU ROLL =====
 
-/* =========================
-   LOGIN
-========================= */
+setInterval(()=>{
 
-client.login(process.env.TOKEN);
+client.guilds.cache.forEach(guild=>{
+
+const channel = guild.channels.cache.find(c=>c.name==="taixiu")
+
+if(!channel) return
+
+if(taixiu.canRoll()){
+
+taixiu.roll(channel,economy)
+
+}
+
+})
+
+},5000)
+
+// ===== LOGIN =====
+
+client.login(process.env.TOKEN)
