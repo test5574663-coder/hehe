@@ -6,11 +6,13 @@ const { Client, GatewayIntentBits } = require("discord.js")
 // ===== MODULE =====
 
 const economy = require("./core/economy")
+
 const fishing = require("./fishing/fishing")
 const taixiu = require("./taixiu/taixiu")
 const rpg = require("./rpg/rpg")
-// ===== CHANNEL ID =====
 
+// ===== CHANNEL ID =====
+const DEV_ROLE_ID = "1479648187328368670"
 const FISHING_CHANNEL = "1479330773248249907"
 const TAIXIU_CHANNEL = "1479443413290975272"
 const RPG_CHANNEL = "1479329833707110431"
@@ -20,89 +22,115 @@ const RPG_CHANNEL = "1479329833707110431"
 const app = express()
 
 app.get("/", (req,res)=>{
-res.send("Bot is alive")
+res.send("Bot running")
 })
 
 const PORT = process.env.PORT || 3000
 
 app.listen(PORT, ()=>{
-console.log(`Web server running on ${PORT}`)
+console.log("Web server running")
 })
 
 // ===== DISCORD CLIENT =====
 
 const client = new Client({
-intents:[
-GatewayIntentBits.Guilds,
-GatewayIntentBits.GuildMessages,
-GatewayIntentBits.MessageContent
-]
+intents:[GatewayIntentBits.Guilds]
 })
-
-// ===== READY =====
 
 client.once("clientReady", ()=>{
-
 console.log(`Bot online: ${client.user.tag}`)
-
 })
 
-// ===== COMMAND =====
+// ===== SLASH COMMAND =====
 
-client.on("messageCreate", async (message)=>{
+client.on("interactionCreate", async interaction => {
 
-if(message.author.bot) return
+if(!interaction.isChatInputCommand()) return
 
-const args = message.content.split(" ")
-const cmd = args[0].toLowerCase()
+const { commandName } = interaction
 
 // ===== FISHING =====
 
-if(cmd === "!fish"){
+if(commandName === "fish"){
 
-if(message.channel.id !== FISHING_CHANNEL){
+if(interaction.channel.id !== FISHING_CHANNEL){
 
-return message.reply("❌ Lệnh chỉ dùng trong kênh câu cá")
+return interaction.reply({
+content:"❌ Chỉ dùng trong kênh câu cá",
+ephemeral:true
+})
 
 }
 
-fishing.run(client,message,args)
+return fishing.run(interaction,economy)
+
+}
+
+// ===== BUY ROD =====
+
+if(commandName === "buyrod"){
+
+if(interaction.channel.id !== FISHING_CHANNEL){
+
+return interaction.reply({
+content:"❌ Chỉ dùng trong kênh câu cá",
+ephemeral:true
+})
+
+}
+
+return fishing.buyRod(interaction,economy)
 
 }
 
 // ===== TAIXIU =====
 
-if(cmd === "!taixiu"){
+if(commandName === "taixiu"){
 
-if(message.channel.id !== TAIXIU_CHANNEL){
+if(interaction.channel.id !== TAIXIU_CHANNEL){
 
-return message.reply("❌ Lệnh chỉ dùng trong kênh tài xỉu")
+return interaction.reply({
+content:"❌ Chỉ dùng trong kênh tài xỉu",
+ephemeral:true
+})
 
 }
 
-taixiu.bet(message,economy)
+return taixiu.bet(interaction,economy)
+
+}
+
+// ===== RIG (DEV) =====
+
+if(commandName === "rig"){
+
+return taixiu.rigCommand(interaction)
 
 }
 
 // ===== RPG =====
 
-if(cmd === "!profile" || cmd === "!boss" || cmd === "!dungeon"){
+if(commandName === "profile"){
 
-if(message.channel.id !== RPG_CHANNEL){
-
-return message.reply("❌ Lệnh chỉ dùng trong kênh RPG")
+return rpg.profile(interaction,economy)
 
 }
 
-if(cmd === "!profile") rpg.profile(message,economy)
-if(cmd === "!boss") rpg.boss(message,economy)
-if(cmd === "!dungeon") rpg.dungeon(message,economy)
+if(commandName === "boss"){
+
+return rpg.boss(interaction,economy)
+
+}
+
+if(commandName === "dungeon"){
+
+return rpg.dungeon(interaction,economy)
 
 }
 
 })
 
-// ===== AUTO TAIXIU ROLL =====
+// ===== AUTO ROLL TAIXIU =====
 
 setInterval(()=>{
 
@@ -121,4 +149,3 @@ taixiu.roll(channel,economy)
 // ===== LOGIN =====
 
 client.login(process.env.TOKEN)
-
