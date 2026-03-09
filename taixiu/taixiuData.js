@@ -2,22 +2,37 @@ const fs = require("fs")
 
 const path = "./src/data/taixiu.json"
 
+// ===== LOAD =====
+
 function load(){
 
 if(!fs.existsSync(path)){
 
-return {
+const data = {
 bets:{},
 history:[],
 enabled:true,
 rig:null
 }
 
+fs.writeFileSync(path,JSON.stringify(data,null,2))
+
+return data
+
 }
 
-return JSON.parse(fs.readFileSync(path))
+const data = JSON.parse(fs.readFileSync(path))
+
+data.bets ??= {}
+data.history ??= []
+data.enabled ??= true
+data.rig ??= null
+
+return data
 
 }
+
+// ===== SAVE =====
 
 function save(data){
 
