@@ -1,82 +1,49 @@
 const { EmbedBuilder } = require("discord.js")
 
-// ================= HISTORY =================
-
-function historyLine(history){
-
-return history.map(h => h === "tai" ? "🔵" : "🟢").join("")
-
+function diceEmoji(n){
+return ["","⚀","⚁","⚂","⚃","⚄","⚅"][n]
 }
 
-// ================= TABLE =================
+function historyLine(history){
+return history.map(x => x === "tai" ? "⚪" : "⚫").join("")
+}
 
-function tableEmbed(data,time){
+function boardEmbed(data,cooldown,result,dice){
 
-const tai = Object.values(data.bets)
+const taiMoney = Object.values(data.bets || {})
 .filter(b=>b.side==="tai")
 .reduce((a,b)=>a+b.money,0)
 
-const xiu = Object.values(data.bets)
+const xiuMoney = Object.values(data.bets || {})
 .filter(b=>b.side==="xiu")
 .reduce((a,b)=>a+b.money,0)
 
-const history = historyLine(data.history)
+const history = historyLine(data.history || [])
 
-const embed = new EmbedBuilder()
+const diceLine = dice ? `${diceEmoji(dice[0])} ${diceEmoji(dice[1])} ${diceEmoji(dice[2])}` : "🎲 🎲 🎲"
 
-.setTitle("======= 🎲 Taixiu For Fun 🎲 =======")
+return new EmbedBuilder()
 
-.setDescription(
-`
-💰 **Tài**        ⏳ **${time}s**        **Xỉu**
+.setColor(0x2f3136)
 
-${tai}                        ${xiu}
+.setDescription(`
 
-```
-        🎲 🎲 🎲
-```
+=========== **/Taixiu For Fun/** ===========
 
-────────────────────────
-${history || "Chưa có cầu"}
-────────────────────────
-`
-)
+⚪ **Tài** ⚪        ⏳ ${cooldown}s        ⚫ **Xỉu** ⚫
 
-.setColor("#f39c12")
+💰 ${taiMoney} VND        ${result || "Rolling..."}        💰 ${xiuMoney} VND
 
-return embed
+${diceLine}
 
-}
+--------------------------------------
 
-// ================= RESULT =================
+${history || "Chưa có lịch sử"}
 
-function resultEmbed(result,dice){
+=================================
 
-const sum = dice.reduce((a,b)=>a+b)
-
-const embed = new EmbedBuilder()
-
-.setTitle("🎲 Kết quả")
-
-.setDescription(
-`
-🎲 ${dice[0]}  🎲 ${dice[1]}  🎲 ${dice[2]}
-
-📊 Tổng: **${sum}**
-
-🔥 Kết quả: **${result.toUpperCase()}**
-`
-)
-
-.setColor("#2ecc71")
-
-return embed
+`)
 
 }
 
-module.exports = {
-
-tableEmbed,
-resultEmbed
-
-}
+module.exports = { boardEmbed }
