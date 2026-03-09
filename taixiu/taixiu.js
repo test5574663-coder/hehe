@@ -1,12 +1,48 @@
+const fs = require("fs")
+const path = "./src/taixiu/taixiuData.json"
+
 const { randomInt } = require("../utils/random")
-const { load, save } = require("./taixiuData")
 const { resultEmbed } = require("./taixiuEmbed")
 
 const DEV_ROLE_ID = "1479648187328368670"
 
 const cooldown = new Map()
 
-// ================= BET =================
+// ===== LOAD DATA =====
+
+function load(){
+
+if(!fs.existsSync(path)){
+
+return {
+bets:{},
+history:[],
+enabled:true,
+rig:null
+}
+
+}
+
+const data = JSON.parse(fs.readFileSync(path))
+
+data.bets ??= {}
+data.history ??= []
+data.enabled ??= true
+data.rig ??= null
+
+return data
+
+}
+
+// ===== SAVE DATA =====
+
+function save(data){
+
+fs.writeFileSync(path,JSON.stringify(data,null,2))
+
+}
+
+// ===== BET =====
 
 async function bet(interaction,economy){
 
@@ -32,8 +68,6 @@ return interaction.editReply("⚠️ Tài xỉu đang tắt")
 
 }
 
-data.bets ??= {}
-
 data.bets[id] = { side, money }
 
 save(data)
@@ -42,13 +76,13 @@ return interaction.editReply("🎲 Đã đặt cược")
 
 }
 
-// ================= ROLL =================
+// ===== ROLL =====
 
 async function roll(channel,economy){
 
 const data = load()
 
-let dice = [
+const dice = [
 
 randomInt(1,6),
 randomInt(1,6),
@@ -56,7 +90,7 @@ randomInt(1,6)
 
 ]
 
-let sum = dice.reduce((a,b)=>a+b)
+const sum = dice.reduce((a,b)=>a+b)
 
 let result = sum >= 11 ? "tai" : "xiu"
 
@@ -71,7 +105,7 @@ data.rig = null
 
 // ===== PAYOUT =====
 
-Object.entries(data.bets || {}).forEach(([id,bet])=>{
+Object.entries(data.bets).forEach(([id,bet])=>{
 
 const player = economy.getUser(id)
 
@@ -93,8 +127,6 @@ economy.updateUser(id,player)
 
 // ===== HISTORY =====
 
-data.history ??= []
-
 data.history.push(result)
 
 if(data.history.length > 12){
@@ -103,7 +135,7 @@ data.history.shift()
 
 }
 
-// ===== RESET =====
+// ===== RESET BET =====
 
 data.bets = {}
 
@@ -117,7 +149,7 @@ channel.send({embeds:[embed]})
 
 }
 
-// ================= COOLDOWN =================
+// ===== COOLDOWN =====
 
 function canRoll(){
 
@@ -126,7 +158,6 @@ const now = Date.now()
 if(!cooldown.has("roll")){
 
 cooldown.set("roll",now)
-
 return true
 
 }
@@ -134,7 +165,6 @@ return true
 if(now - cooldown.get("roll") >= 60000){
 
 cooldown.set("roll",now)
-
 return true
 
 }
@@ -143,17 +173,7 @@ return false
 
 }
 
-// ================= DEV =================
-
-function rig(side){
-
-const data = load()
-
-data.rig = side
-
-save(data)
-
-}
+// ===== DEV RIG =====
 
 async function rigCommand(interaction){
 
@@ -168,11 +188,17 @@ ephemeral:true
 
 const side = interaction.options.getString("side")
 
-rig(side)
+const data = load()
+
+data.rig = side
+
+save(data)
 
 return interaction.reply("🧪 Đã bẻ cầu")
 
 }
+
+// ===== TOGGLE =====
 
 function toggle(){
 
@@ -191,7 +217,6 @@ module.exports = {
 bet,
 roll,
 canRoll,
-rig,
 rigCommand,
 toggle
 
