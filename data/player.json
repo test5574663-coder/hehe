@@ -1,0 +1,25 @@
+{
+ "users": {
+
+  "123456789": {
+   "vnd": 5000,
+   "gold": 10,
+   "class": "mage",
+   "level": 3,
+   "exp": 80,
+   "hp": 100,
+   "maxhp": 100,
+   "dmg": 8,
+   "def": 5,
+   "crit": 6,
+   "spell": 10,
+   "weapon": "Arcane Staff",
+   "rods": 3,
+   "inventory": [
+    "Cá rô",
+    "Iron Sword"
+   ]
+  }
+
+ }
+}
