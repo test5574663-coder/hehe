@@ -1,5 +1,5 @@
 const fs = require("fs")
-const path = "./src/taixiu/taixiuData.json"
+const { load, save } = require("./taixiuData")
 
 const { randomInt } = require("../utils/random")
 const { resultEmbed } = require("./taixiuEmbed")
@@ -221,3 +221,4 @@ rigCommand,
 toggle
 
 }
+
