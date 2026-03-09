@@ -5,12 +5,10 @@ const { Client, GatewayIntentBits } = require("discord.js")
 
 // ===== MODULE =====
 
-const economy = require("./src/core/economy")
-
-const fishing = require("./src/fishing/fishing")
-const taixiu = require("./src/taixiu/taixiu")
-const rpg = require("./src/rpg/rpg")
-
+const economy = require("./core/economy")
+const fishing = require("./fishing/fishing")
+const taixiu = require("./taixiu/taixiu")
+const rpg = require("./rpg/rpg")
 // ===== CHANNEL ID =====
 
 const FISHING_CHANNEL = "1479330773248249907"
@@ -123,3 +121,4 @@ taixiu.roll(channel,economy)
 // ===== LOGIN =====
 
 client.login(process.env.TOKEN)
+
